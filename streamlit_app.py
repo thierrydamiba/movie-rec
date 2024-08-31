@@ -1,8 +1,6 @@
 import streamlit as st
 from qdrant_client import QdrantClient
 import numpy as np
-import random
-import pandas as pd
 
 # Initialize Qdrant client using secrets from Streamlit
 client = QdrantClient(api_key=st.secrets["q_api_key"], url=st.secrets["q_url"])
@@ -24,11 +22,11 @@ def get_movie_recommendations(vectors, top_k=5):
 
 # Function to fetch random movies from Qdrant collection
 def get_random_movies(client, num_movies=3):
-    points = client.scroll(
+    points, _ = client.scroll(
         collection_name="movielens",
         limit=num_movies,
     )
-    return points[0]  # Returns the list of points (movies)
+    return points  # Returns the list of points (movies)
 
 # Function to convert movie title to vector (assumes the vectors are already stored in Qdrant)
 def get_movie_vector(movie_title, client):
@@ -50,15 +48,16 @@ st.title("Movie Recommendation Engine")
 liked_vectors = []
 st.write("Do you like these movies?")
 for movie in random_movies:
-    st.write(f"**{movie['payload']['title']}**")
+    movie_title = movie.payload.get('title', 'Unknown Title')
+    st.write(f"**{movie_title}**")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button(f"👍 Like {movie['payload']['title']}"):
-            vector = get_movie_vector(movie['payload']['title'], client)
+        if st.button(f"👍 Like {movie_title}"):
+            vector = get_movie_vector(movie_title, client)
             if vector is not None:
                 liked_vectors.append(vector)
     with col2:
-        st.button(f"👎 Dislike {movie['payload']['title']}")
+        st.button(f"👎 Dislike {movie_title}")
 
 # Generate recommendations if the user liked at least one movie
 if len(liked_vectors) > 0:
