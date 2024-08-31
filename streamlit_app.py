@@ -3,7 +3,7 @@ from qdrant_client import QdrantClient
 import numpy as np
 
 # Initialize Qdrant client
-client = QdrantClient(api_key=q_api_key, url=q_url)  # Adjust host/port as necessary
+client = QdrantClient(api_key=st.secrets["q_api_key"], url=st.secrets["q_url"])  # Adjust host/port as necessary
 
 # Function to retrieve movie recommendations from Qdrant
 def get_movie_recommendations(vector, top_k=5):
