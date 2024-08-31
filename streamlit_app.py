@@ -20,14 +20,21 @@ def load_movies(client):
     
     # Iterate through each user point
     for point in response[0]:
-        st.write(f"User ID: {point.payload['user_id']}, Movies Rated: {len(point.payload['movies_rated'])}")
+        user_id = point.payload.get('user_id', 'Unknown ID')
+        movies_rated = point.payload.get('movies_rated', None)
+        
+        if movies_rated is None:
+            st.write(f"User ID: {user_id} has no rated movies.")
+            continue
+        
+        st.write(f"User ID: {user_id}, Movies Rated: {len(movies_rated)}")
         
         # Iterate through each movie in the user's movies_rated list
-        for movie in point.payload.get("movies_rated", []):
-            st.write(f"Found movie: {movie['title']} with ID: {movie['movie_id']}")  # Debugging line
+        for movie in movies_rated:
+            st.write(f"Found movie: {movie['title']} with ID: {movie['movie_id']}")
             movies[movie["movie_id"]] = movie["title"]
     
-    st.write(f"Total movies loaded: {len(movies)}")  # Debugging line
+    st.write(f"Total movies loaded: {len(movies)}")
     
     return movies
 
