@@ -6,26 +6,23 @@ from collections import defaultdict
 # Initialize Qdrant client using secrets from Streamlit
 client = QdrantClient(api_key=st.secrets["q_api_key"], url=st.secrets["q_url"])
 
-# Load movies from Qdrant or predefined list
+# Function to load movie titles from Qdrant
 def load_movies(client):
-    response = client.scroll(collection_name="movieai", limit=100)
+    response = client.scroll(collection_name="movielens", limit=100)
     movies = {point.payload['movie_id']: point.payload['title'] for point in response[0]}
     return movies
 
 movies_dict = load_movies(client)
 
-# Function to convert user ratings into a Qdrant vector
+# Convert user ratings into a Qdrant vector
 def to_vector(ratings):
-    vector = models.SparseVector(
-        values=[],
-        indices=[]
-    )
+    vector = models.SparseVector(values=[], indices=[])
     for movie_id, rating in ratings.items():
         vector.values.append(rating)
         vector.indices.append(movie_id)
     return vector
 
-# App UI
+# Streamlit app UI
 st.title("Movie Recommendation Engine")
 
 st.write("Rate some movies to get personalized recommendations:")
@@ -35,7 +32,9 @@ user_ratings = {}
 
 # Allow users to rate movies
 for movie_id, movie_title in movies_dict.items():
-    user_ratings[movie_id] = st.slider(f"{movie_title}", min_value=-1, max_value=1, value=0)
+    user_ratings[movie_id] = st.slider(
+        f"{movie_title} ({movie_id})", min_value=-1, max_value=1, value=0
+    )
 
 # Filter out movies that haven't been rated
 filtered_ratings = {movie_id: rating for movie_id, rating in user_ratings.items() if rating != 0}
@@ -44,7 +43,7 @@ filtered_ratings = {movie_id: rating for movie_id, rating in user_ratings.items(
 if st.button("Get Recommendations") and filtered_ratings:
     query_vector = to_vector(filtered_ratings)
     results = client.search(
-        collection_name="movieai",
+        collection_name="movielens",
         query_vector=models.NamedSparseVector(
             name="ratings",
             vector=query_vector
@@ -71,10 +70,10 @@ if st.button("Get Recommendations") and filtered_ratings:
     st.write("Top recommended movies based on your ratings:")
     for movie_id, score in top_movies[:5]:
         movie_data = client.scroll(
-            collection_name="movieai",
+            collection_name="movielens",
             filter={"must": [{"key": "movie_id", "match": {"value": movie_id}}]}
         )
-        if movie_data:
+        if movie_data[0]:
             title = movie_data[0].payload["title"]
             genres = movie_data[0].payload["genres"]
             st.write(f"{title} ({genres}): Score {score}")
