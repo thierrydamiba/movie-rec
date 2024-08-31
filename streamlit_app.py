@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 from qdrant_client import QdrantClient, models
-from collections import defaultdict
 
 # Initialize Qdrant client using secrets from Streamlit
 client = QdrantClient(api_key=st.secrets["q_api_key"], url=st.secrets["q_url"])
@@ -13,7 +12,9 @@ def load_movies(client):
     # Initialize an empty dictionary to store movie titles
     movies = {}
     
+    # Iterate through each user point
     for point in response[0]:
+        # Iterate through each movie in the user's movies_rated list
         for movie in point.payload.get("movies_rated", []):
             movies[movie["movie_id"]] = movie["title"]
     
