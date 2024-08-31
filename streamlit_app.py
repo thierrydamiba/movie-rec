@@ -6,7 +6,7 @@ client = QdrantClient(api_key=st.secrets["q_api_key"], url=st.secrets["q_url"])
 
 # Load movies from Qdrant
 def load_movies(client):
-    response = client.scroll(collection_name="movielens", limit=10)
+    response = client.scroll(collection_name="movielens", limit=50)  # Increased limit to 50
     
     # Check if data is retrieved
     if not response[0]:
@@ -31,7 +31,7 @@ def load_movies(client):
         
         # Iterate through each movie in the user's movies_rated list
         for movie in movies_rated:
-            st.write(f"Found movie: {movie['title']} with ID: {movie['movie_id']}")
+            st.write(f"Found movie: {movie['title']} with ID: {movie['movie_id']}")  # Debugging line
             movies[movie["movie_id"]] = movie["title"]
     
     st.write(f"Total movies loaded: {len(movies)}")
