@@ -6,10 +6,17 @@ from collections import defaultdict
 # Initialize Qdrant client using secrets from Streamlit
 client = QdrantClient(api_key=st.secrets["q_api_key"], url=st.secrets["q_url"])
 
-# Function to load movie titles from Qdrant
+# Load movies from Qdrant
 def load_movies(client):
     response = client.scroll(collection_name="movielens", limit=100)
-    movies = {point.payload['movie_id']: point.payload['title'] for point in response[0]}
+    
+    # Initialize an empty dictionary to store movie titles
+    movies = {}
+    
+    for point in response[0]:
+        for movie in point.payload.get("movies_rated", []):
+            movies[movie["movie_id"]] = movie["title"]
+    
     return movies
 
 movies_dict = load_movies(client)
@@ -71,11 +78,14 @@ if st.button("Get Recommendations") and filtered_ratings:
     for movie_id, score in top_movies[:5]:
         movie_data = client.scroll(
             collection_name="movielens",
-            filter={"must": [{"key": "movie_id", "match": {"value": movie_id}}]}
+            filter={"must": [{"key": "movies_rated.movie_id", "match": {"value": movie_id}}]}
         )
         if movie_data[0]:
-            title = movie_data[0].payload["title"]
-            genres = movie_data[0].payload["genres"]
-            st.write(f"{title} ({genres}): Score {score}")
+            # Since movie_data[0] contains the user data, we need to find the movie within the movies_rated list
+            movie_info = next((m for m in movie_data[0].payload["movies_rated"] if m["movie_id"] == movie_id), None)
+            if movie_info:
+                title = movie_info["title"]
+                genres = movie_info["genres"]
+                st.write(f"{title} ({genres}): Score {score}")
 else:
     st.warning("Please rate at least one movie to get recommendations.")
