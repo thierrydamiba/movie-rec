@@ -2,6 +2,7 @@ import streamlit as st
 from qdrant_client import QdrantClient
 import numpy as np
 import random
+import pandas as pd  
 
 # Initialize Qdrant client
 client = QdrantClient(api_key=st.secrets["q_api_key"], url=st.secrets["q_url"])  # Adjust host/port as necessary
